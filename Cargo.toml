@@ -1,0 +1,9 @@
+[package]
+name = "bloom-cuckoo-rs"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "Bloom and cuckoo filters from scratch, measured against each other and against the theory"
+repository = "https://github.com/Urthella/bloom-cuckoo-rs"
+
+[dependencies]
