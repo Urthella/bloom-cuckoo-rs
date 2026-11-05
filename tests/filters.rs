@@ -162,3 +162,58 @@ fn cuckoo_needs_fewer_bits_than_bloom_at_low_rates() {
         "this table has slack, so it's bigger than that"
     );
 }
+
+#[test]
+fn xor_has_no_false_negatives_and_the_expected_rate() {
+    use bloom_cuckoo_rs::Xor;
+    for fp_bits in [8, 12] {
+        let xor = Xor::build(&(0..N).collect::<Vec<_>>(), fp_bits);
+        assert!((0..N).all(|i| xor.contains(&i)));
+        let rate = measured(|q| xor.contains(&q));
+        let expected = xor.expected_fpr();
+        let tolerance = if fp_bits == 12 { 0.3 } else { 0.15 }; // about 120 hits at 12 bits
+        assert!(
+            close(rate, expected, tolerance),
+            "{fp_bits} bits: measured {rate}, expected {expected}"
+        );
+        // About 1.23 slots per item.
+        let per_item = xor.bits() as f64 / N as f64 / fp_bits as f64;
+        assert!(
+            (1.23..1.24).contains(&per_item),
+            "{per_item} slots per item"
+        );
+    }
+}
+
+#[test]
+fn xor_builds_for_any_set() {
+    use bloom_cuckoo_rs::Xor;
+    for n in [0u64, 1, 2, 3, 10, 1000, 100_000] {
+        let items: Vec<u64> = (0..n).collect();
+        let xor = Xor::build(&items, 8);
+        assert!(items.iter().all(|i| xor.contains(i)), "n={n}");
+    }
+    // Repeats don't stop it from building.
+    let repeated = Xor::build(&[1u64, 2, 2, 3, 3, 3], 16);
+    assert!([1u64, 2, 3].iter().all(|i| repeated.contains(i)));
+    assert!(!repeated.contains(&4u64));
+    let words = Xor::build(["alice", "bob"].iter().copied(), 16);
+    assert!(words.contains("alice") && words.contains("bob") && !words.contains("carol"));
+}
+
+#[test]
+fn xor_is_the_smallest_at_the_same_rate() {
+    use bloom_cuckoo_rs::Xor;
+    let xor = Xor::build(&(0..N).collect::<Vec<_>>(), 12);
+    let rate = xor.expected_fpr();
+    let per_item = |bits: u64| bits as f64 / N as f64;
+    // A Bloom filter sized for the same rate.
+    let bloom = Bloom::new(N as usize, rate);
+    assert!(per_item(xor.bits()) < per_item(bloom.bits()));
+    // The smallest cuckoo fingerprint that gets as low at 95% full: 8·0.95/(2^f - 1) ≤ rate.
+    let f = (1..=16)
+        .find(|f| 8.0 * 0.95 / ((1u64 << f) - 1) as f64 <= rate)
+        .unwrap();
+    assert_eq!(f, 15);
+    assert!(per_item(xor.bits()) < f as f64 / 0.95);
+}
