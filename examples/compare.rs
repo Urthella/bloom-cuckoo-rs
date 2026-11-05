@@ -5,7 +5,7 @@
 use std::hint::black_box;
 use std::time::Instant;
 
-use bloom_cuckoo_rs::{Bloom, Cuckoo};
+use bloom_cuckoo_rs::{Bloom, Cuckoo, Xor};
 
 const N: u64 = 985_000; // 94% of 2^20 cuckoo slots
 const QUERIES: u64 = 2_000_000;
@@ -56,6 +56,21 @@ fn main() {
             bloom.expected_fpr(),
             ns,
             |q| bloom.contains(&q),
+            false,
+        );
+    }
+    let items: Vec<u64> = (0..N).collect();
+    for fp_bits in [8, 12, 16] {
+        let started = Instant::now();
+        let xor = Xor::build(&items, fp_bits);
+        let ns = started.elapsed().as_nanos() as f64 / N as f64;
+        let name = format!("Xor, {fp_bits}-bit fingerprints");
+        row(
+            &name,
+            xor.bits(),
+            xor.expected_fpr(),
+            ns,
+            |q| xor.contains(&q),
             false,
         );
     }

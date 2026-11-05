@@ -1,12 +1,14 @@
-//! Bloom and cuckoo filters, small enough to read, with the false positive rates the theory
-//! predicts. Both answer "might this be in the set?" in far less space than the set itself: "no"
+//! Bloom, cuckoo and xor filters, small enough to read, with the false positive rates the theory
+//! predicts. All three answer "might this be in the set?" in far less space than the set itself: "no"
 //! is always right, and "yes" is wrong at a rate you choose.
 
 mod bloom;
 mod cuckoo;
+mod xor;
 
 pub use bloom::Bloom;
 pub use cuckoo::{Cuckoo, Full};
+pub use xor::Xor;
 
 use std::hash::{DefaultHasher, Hash, Hasher};
 
