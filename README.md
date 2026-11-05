@@ -2,7 +2,7 @@
 
 [![ci](https://github.com/Urthella/bloom-cuckoo-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/Urthella/bloom-cuckoo-rs/actions/workflows/ci.yml)
 
-A Bloom filter and a cuckoo filter in about 300 lines of Rust with no dependencies, measured
+A Bloom filter and a cuckoo filter in about 220 lines of Rust with no dependencies, measured
 against each other and against the theory. Both answer "might this be in the set?" in far less
 space than the set: "no" is always right, and "yes" is wrong at a rate you choose.
 
